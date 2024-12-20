@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 
 export async function handler(event) {
-    const webhookUrl = "https://hooks.slack.com/services/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";
+    const webhookUrl = "https://hooks.slack.com/services/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";
 
     try {
         // Parse the incoming form data from the event body
