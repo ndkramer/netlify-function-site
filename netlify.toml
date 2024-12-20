@@ -1,18 +1,15 @@
 [build]
-  # Directory where your site files are located
-  publish = "public"
-  # Directory for serverless functions
+  # Remove 'publish' since we are not deploying static files
   functions = "functions"
 
 [functions]
-  # Specify the Node.js bundler for serverless functions
+  # Specify the Node.js bundler
   node_bundler = "esbuild"
 
 [build.environment]
   # Specify the Node.js version
   NODE_VERSION = "18"
 
-# Optional: Redirect rules (if needed)
 [[redirects]]
   from = "/download-outline"
   to = "/.netlify/functions/sendToSlack"
