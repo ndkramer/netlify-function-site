@@ -1,20 +1,20 @@
 import fetch from 'node-fetch';
 
 export async function handler(event) {
-    try {
-        // Allow only POST requests
-        if (event.httpMethod !== "POST") {
-            return {
-                statusCode: 405,
-                headers: {
-                    "Access-Control-Allow-Origin": "https://grapefruit-disc-eb44.squarespace.com", // Replace with your Squarespace URL
-                    "Access-Control-Allow-Headers": "Content-Type",
-                    "Access-Control-Allow-Methods": "POST, OPTIONS",
-                },
-                body: JSON.stringify({ error: "Method Not Allowed" }),
-            };
-        }
+    // Handle CORS Preflight Request
+    if (event.httpMethod === "OPTIONS") {
+        return {
+            statusCode: 200,
+            headers: {
+                "Access-Control-Allow-Origin": "https://grapefruit-disc-eb44.squarespace.com", // Replace with your Squarespace URL
+                "Access-Control-Allow-Headers": "Content-Type",
+                "Access-Control-Allow-Methods": "POST, OPTIONS",
+            },
+            body: "",
+        };
+    }
 
+    try {
         // Parse the incoming data
         const data = JSON.parse(event.body);
 
@@ -23,9 +23,8 @@ export async function handler(event) {
             return {
                 statusCode: 400,
                 headers: {
-                    "Access-Control-Allow-Origin": "https://grapefruit-disc-eb44.squarespace.com", // Replace with your Squarespace URL
+                    "Access-Control-Allow-Origin": "https://grapefruit-disc-eb44.squarespace.com",
                     "Access-Control-Allow-Headers": "Content-Type",
-                    "Access-Control-Allow-Methods": "POST, OPTIONS",
                 },
                 body: JSON.stringify({ error: "Missing required fields" }),
             };
@@ -50,7 +49,7 @@ export async function handler(event) {
         return {
             statusCode: 200,
             headers: {
-                "Access-Control-Allow-Origin": "https://grapefruit-disc-eb44.squarespace.com", // Replace with your Squarespace URL
+                "Access-Control-Allow-Origin": "https://grapefruit-disc-eb44.squarespace.com",
                 "Access-Control-Allow-Headers": "Content-Type",
                 "Access-Control-Allow-Methods": "POST, OPTIONS",
             },
@@ -61,7 +60,7 @@ export async function handler(event) {
         return {
             statusCode: 500,
             headers: {
-                "Access-Control-Allow-Origin": "https://grapefruit-disc-eb44.squarespace.com", // Replace with your Squarespace URL
+                "Access-Control-Allow-Origin": "https://grapefruit-disc-eb44.squarespace.com",
                 "Access-Control-Allow-Headers": "Content-Type",
                 "Access-Control-Allow-Methods": "POST, OPTIONS",
             },
