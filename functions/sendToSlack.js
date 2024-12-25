@@ -43,9 +43,10 @@ exports.handler = async (event) => {
         };
     }
 
-    const { email, contactPreference, courseName } = formData;
+    const { firstName, lastName, email, course, message } = formData;
 
-    if (!email || !contactPreference || !courseName) {
+    // Validate required fields
+    if (!firstName || !lastName || !email || !course) {
         return {
             statusCode: 400,
             headers: {
@@ -56,7 +57,7 @@ exports.handler = async (event) => {
     }
 
     const slackMessage = {
-        text: `New course download request:\n- Email: ${email}\n- Contact Preference: ${contactPreference}\n- Course: ${courseName}`,
+        text: `New course request:\n- Name: ${firstName} ${lastName}\n- Email: ${email}\n- Course: ${course}\n- Message: ${message || "No message provided"}`,
     };
 
     try {
