@@ -1,3 +1,5 @@
+const axios = require("axios"); // Ensure axios is installed
+
 exports.handler = async (event) => {
     const allowedOrigins = [
         "https://www.one80labs.com",
@@ -7,7 +9,6 @@ exports.handler = async (event) => {
     const origin = event.headers.origin;
     const isAllowed = allowedOrigins.includes(origin);
 
-    // Handle preflight (OPTIONS) requests
     if (event.httpMethod === "OPTIONS") {
         return {
             statusCode: 204,
@@ -19,7 +20,6 @@ exports.handler = async (event) => {
         };
     }
 
-    // Deny request if origin is not allowed
     if (!isAllowed) {
         return {
             statusCode: 403,
@@ -30,7 +30,6 @@ exports.handler = async (event) => {
         };
     }
 
-    // Parse the form data from the request body
     let formData;
     try {
         formData = JSON.parse(event.body);
@@ -44,7 +43,6 @@ exports.handler = async (event) => {
         };
     }
 
-    // Extract fields
     const { email, contactPreference, courseName } = formData;
 
     if (!email || !contactPreference || !courseName) {
@@ -57,28 +55,36 @@ exports.handler = async (event) => {
         };
     }
 
-    // Log form data for debugging
-    console.log("Form Data Received:", formData);
+    const slackMessage = {
+        text: `New course download request:\n- Email: ${email}\n- Contact Preference: ${contactPreference}\n- Course: ${courseName}`,
+    };
 
-    // Simulate sending data to Slack or other service
     try {
-        console.log(`Sending form data to Slack: ${JSON.stringify(formData)}`);
-        // Simulate successful processing
+        // Access the Slack webhook URL from Netlify environment variables
+        const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL;
+
+        if (!slackWebhookUrl) {
+            throw new Error("Slack webhook URL is not configured in environment variables.");
+        }
+
+        const response = await axios.post(slackWebhookUrl, slackMessage);
+        console.log("Slack response:", response.data);
+
         return {
             statusCode: 200,
             headers: {
                 "Access-Control-Allow-Origin": origin,
             },
-            body: JSON.stringify({ message: "Form submitted successfully" }),
+            body: JSON.stringify({ message: "Form submitted successfully and sent to Slack." }),
         };
     } catch (error) {
-        console.error("Error sending data to Slack:", error);
+        console.error("Error sending message to Slack:", error);
         return {
             statusCode: 500,
             headers: {
                 "Access-Control-Allow-Origin": origin,
             },
-            body: JSON.stringify({ message: "Internal server error" }),
+            body: JSON.stringify({ message: "Failed to send message to Slack." }),
         };
     }
 };
