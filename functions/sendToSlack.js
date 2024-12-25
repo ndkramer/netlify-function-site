@@ -1,70 +1,84 @@
-import fetch from 'node-fetch';
+exports.handler = async (event) => {
+    const allowedOrigins = [
+        "https://www.one80labs.com",
+        "https://grapefruit-disc-eb44.squarespace.com"
+    ];
 
-export async function handler(event) {
-    // Handle CORS Preflight Request
+    const origin = event.headers.origin;
+    const isAllowed = allowedOrigins.includes(origin);
+
+    // Handle preflight (OPTIONS) requests
     if (event.httpMethod === "OPTIONS") {
         return {
-            statusCode: 200,
+            statusCode: 204,
             headers: {
-                "Access-Control-Allow-Origin": "https://grapefruit-disc-eb44.squarespace.com", // Replace with your Squarespace URL
-                "Access-Control-Allow-Headers": "Content-Type",
+                "Access-Control-Allow-Origin": isAllowed ? origin : "null",
                 "Access-Control-Allow-Methods": "POST, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type",
             },
-            body: "",
         };
     }
 
-    try {
-        // Parse the incoming data
-        const data = JSON.parse(event.body);
-
-        // Validate the required fields
-        if (!data.email || !data.contactPreference || !data.courseName) {
-            return {
-                statusCode: 400,
-                headers: {
-                    "Access-Control-Allow-Origin": "https://grapefruit-disc-eb44.squarespace.com",
-                    "Access-Control-Allow-Headers": "Content-Type",
-                },
-                body: JSON.stringify({ error: "Missing required fields" }),
-            };
-        }
-
-        // Construct the Slack message
-        const slackMessage = {
-            text: `*New Form Submission:*\n- Email: ${data.email}\n- Contact Preference: ${data.contactPreference}\n- Course Name: ${data.courseName}`,
+    // Deny request if origin is not allowed
+    if (!isAllowed) {
+        return {
+            statusCode: 403,
+            headers: {
+                "Access-Control-Allow-Origin": "null",
+            },
+            body: JSON.stringify({ message: "Origin not allowed" }),
         };
+    }
 
-        // Send the message to Slack
-        const response = await fetch(process.env.SLACK_WEBHOOK_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(slackMessage),
-        });
+    // Parse the form data from the request body
+    let formData;
+    try {
+        formData = JSON.parse(event.body);
+    } catch (error) {
+        return {
+            statusCode: 400,
+            headers: {
+                "Access-Control-Allow-Origin": origin,
+            },
+            body: JSON.stringify({ message: "Invalid JSON data" }),
+        };
+    }
 
-        if (!response.ok) {
-            throw new Error(`Slack API error: ${response.statusText}`);
-        }
+    // Extract fields
+    const { email, contactPreference, courseName } = formData;
 
+    if (!email || !contactPreference || !courseName) {
+        return {
+            statusCode: 400,
+            headers: {
+                "Access-Control-Allow-Origin": origin,
+            },
+            body: JSON.stringify({ message: "Missing required fields" }),
+        };
+    }
+
+    // Log form data for debugging
+    console.log("Form Data Received:", formData);
+
+    // Simulate sending data to Slack or other service
+    try {
+        console.log(`Sending form data to Slack: ${JSON.stringify(formData)}`);
+        // Simulate successful processing
         return {
             statusCode: 200,
             headers: {
-                "Access-Control-Allow-Origin": "https://grapefruit-disc-eb44.squarespace.com",
-                "Access-Control-Allow-Headers": "Content-Type",
-                "Access-Control-Allow-Methods": "POST, OPTIONS",
+                "Access-Control-Allow-Origin": origin,
             },
-            body: JSON.stringify({ message: "Message sent to Slack successfully!" }),
+            body: JSON.stringify({ message: "Form submitted successfully" }),
         };
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Error sending data to Slack:", error);
         return {
             statusCode: 500,
             headers: {
-                "Access-Control-Allow-Origin": "https://grapefruit-disc-eb44.squarespace.com",
-                "Access-Control-Allow-Headers": "Content-Type",
-                "Access-Control-Allow-Methods": "POST, OPTIONS",
+                "Access-Control-Allow-Origin": origin,
             },
-            body: JSON.stringify({ error: "Failed to send message to Slack." }),
+            body: JSON.stringify({ message: "Internal server error" }),
         };
     }
-}
+};
