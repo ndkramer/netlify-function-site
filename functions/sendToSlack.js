@@ -2,8 +2,9 @@ const axios = require("axios"); // Ensure axios is installed
 
 exports.handler = async (event) => {
     const allowedOrigins = [
-        "https://www.one80labs.com",
-        "https://grapefruit-disc-eb44.squarespace.com"
+        "https://www.one80training.com", // New domain
+        "https://one80training.com",     // New domain without www
+        "https://grapefruit-disc-eb44.squarespace.com" // Squarespace domain (if still relevant)
     ];
 
     const origin = event.headers.origin;
