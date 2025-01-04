@@ -1,34 +1,34 @@
-const fetch = require('node-fetch');
+const fetch = require('node-fetch'); // Import node-fetch
 
-exports.handler = async (event) => {
-  try {
-    // Extract the URL parameters
-    const baseUrl = "https://www.one80training.com/courses?format=json-pretty";
-    const { queryStringParameters } = event;
+exports.handler = async function (event, context) {
+    // URL of the target API
+    const targetUrl = 'https://www.one80training.com/courses?format=json-pretty';
 
-    // Append any query parameters for pagination or filtering
-    const queryParams = new URLSearchParams(queryStringParameters).toString();
-    const targetUrl = `${baseUrl}&${queryParams}`;
+    try {
+        // Fetch data from the target API
+        const response = await fetch(targetUrl);
 
-    // Fetch data from Squarespace
-    const response = await fetch(targetUrl);
+        // Check if the response is OK
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch from Squarespace: ${response.statusText}`);
+        // Parse the JSON response
+        const data = await response.json();
+
+        // Return the fetched data
+        return {
+            statusCode: 200,
+            body: JSON.stringify(data),
+        };
+    } catch (error) {
+        // Log any errors
+        console.error("Error fetching data:", error);
+
+        // Return an error response
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: error.message }),
+        };
     }
-
-    const data = await response.json();
-
-    // Return the data to the client
-    return {
-      statusCode: 200,
-      body: JSON.stringify(data),
-    };
-  } catch (error) {
-    console.error("Proxy error:", error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: error.message }),
-    };
-  }
 };
