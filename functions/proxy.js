@@ -1,10 +1,12 @@
-const fetch = require('node-fetch'); // Import node-fetch
+const fetch = require('node-fetch'); // Use CommonJS syntax for Node.js environment
 
 exports.handler = async function (event, context) {
     // URL of the target API
     const targetUrl = 'https://www.one80training.com/courses?format=json-pretty';
 
     try {
+        console.log("Fetching data from target URL:", targetUrl); // Debugging
+
         // Fetch data from the target API
         const response = await fetch(targetUrl);
 
@@ -15,6 +17,7 @@ exports.handler = async function (event, context) {
 
         // Parse the JSON response
         const data = await response.json();
+        console.log("Data fetched successfully:", data); // Debugging
 
         // Return the fetched data
         return {
@@ -23,7 +26,7 @@ exports.handler = async function (event, context) {
         };
     } catch (error) {
         // Log any errors
-        console.error("Error fetching data:", error);
+        console.error("Error in proxy function:", error);
 
         // Return an error response
         return {
