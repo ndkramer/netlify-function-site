@@ -1,3 +1,5 @@
+proxy.js 
+
 const fetch = require('node-fetch');
 
 exports.handler = async function (event, context) {
@@ -11,11 +13,21 @@ exports.handler = async function (event, context) {
 
         // Fetch data from the target API
         const response = await fetch(fetchUrl);
+        console.log("Response Headers:", response.headers.raw()); // Log response headers
 
         if (!response.ok) {
             const rawText = await response.text(); // Log raw response in case of an error
             console.error("Error response text:", rawText);
             throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        // Verify response content type
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const rawText = await response.text(); // Capture HTML response
+            console.error("Unexpected content type:", contentType);
+            console.error("Response content:", rawText);
+            throw new Error("Invalid JSON response: received non-JSON content.");
         }
 
         const data = await response.json();
@@ -45,3 +57,4 @@ exports.handler = async function (event, context) {
         };
     }
 };
+
