@@ -1,33 +1,47 @@
-
 const fetch = require('node-fetch');
 
 exports.handler = async function (event, context) {
-    const targetUrl = 'https://www.one80training.com/courses';
-    const offset = event.queryStringParameters?.offset || ''; // Fetch offset from query parameters, if provided
+    const baseUrl = 'https://www.one80training.com/courses';
+    let allData = [];
+    let nextPageUrl = baseUrl;
+    let iteration = 0; // Limit iterations to prevent infinite loops
 
     try {
-        const fetchUrl = `${targetUrl}${offset ? `?offset=${offset}` : ''}`;
-        console.log(`Fetching from: ${fetchUrl}`);
+        console.log("Fetching data from:", nextPageUrl); // Debugging
 
-        const response = await fetch(fetchUrl);
-        console.log("Response Headers:", response.headers.raw());
+        while (nextPageUrl && iteration < 20) { // Pagination loop with a maximum of 20 iterations
+            const response = await fetch(nextPageUrl);
 
-        if (!response.ok) {
-            const rawText = await response.text();
-            console.error("Error response text:", rawText);
-            throw new Error(`HTTP error! Status: ${response.status}`);
+            // Log response headers for debugging
+            console.log("Response Headers:", response.headers.raw());
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            // Verify JSON response
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error("Invalid JSON response: received non-JSON content.");
+            }
+
+            const data = await response.json();
+
+            // Append items to the allData array
+            if (data.items && Array.isArray(data.items)) {
+                allData = allData.concat(data.items);
+            }
+
+            // Check for nextPageUrl
+            nextPageUrl = data.pagination?.nextPageUrl
+                ? `${baseUrl}${data.pagination.nextPageUrl}`
+                : null;
+
+            console.log(`Fetched ${data.items?.length || 0} items from: ${nextPageUrl}`);
+            iteration++;
         }
 
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            const rawText = await response.text();
-            console.error("Unexpected content type:", contentType);
-            console.error("Response content (non-JSON):", rawText); // Log unexpected content
-            throw new Error("Invalid JSON response: received non-JSON content.");
-        }
-
-        const data = await response.json();
-        console.log("Fetched data successfully:", data);
+        console.log(`Total items fetched: ${allData.length}`);
 
         return {
             statusCode: 200,
@@ -37,7 +51,7 @@ exports.handler = async function (event, context) {
                 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type',
             },
-            body: JSON.stringify(data),
+            body: JSON.stringify({ items: allData }), // Return all fetched data
         };
     } catch (error) {
         console.error("Error in proxy function:", error);
