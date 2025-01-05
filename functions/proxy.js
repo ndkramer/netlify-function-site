@@ -1,65 +1,47 @@
 const fetch = require('node-fetch');
 
 exports.handler = async function (event, context) {
-    const baseUrl = 'https://www.one80training.com/courses?format=json-pretty';
+    const targetUrl = 'https://www.one80training.com/courses';
+    const offset = event.queryStringParameters?.offset || ''; // Fetch offset from query parameters, if provided
 
     try {
-        console.log("Starting data fetch from API...");
+        // Construct the full URL with the offset
+        const fetchUrl = `${targetUrl}${offset ? `?offset=${offset}` : ''}`;
+        console.log(`Fetching from: ${fetchUrl}`); // Log the full URL
 
-        let allItems = [];
-        let nextPageUrl = baseUrl;
+        // Fetch data from the target API
+        const response = await fetch(fetchUrl);
 
-        // Fetch all pages of data
-        while (nextPageUrl) {
-            console.log("Fetching page from:", nextPageUrl);
-
-            const response = await fetch(nextPageUrl);
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            console.log("Page data fetched successfully:", data);
-
-            // Validate and concatenate data
-            if (data.items && Array.isArray(data.items)) {
-                allItems = allItems.concat(data.items);
-            } else {
-                throw new Error("Invalid data format: 'items' not found or not an array");
-            }
-
-            // Update nextPageUrl for pagination
-            nextPageUrl = data.pagination && data.pagination.nextPageUrl
-                ? `https://www.one80training.com${data.pagination.nextPageUrl}`
-                : null;
+        if (!response.ok) {
+            const rawText = await response.text(); // Log raw response in case of an error
+            console.error("Error response text:", rawText);
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
-        console.log(`Total items fetched: ${allItems.length}`);
+        const data = await response.json();
+        console.log("Fetched data successfully:", data); // Log the fetched data
 
-        // Return all items with CORS headers
         return {
             statusCode: 200,
             headers: {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Origin': '*', // Allow all origins
                 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type',
             },
-            body: JSON.stringify({ items: allItems }),
+            body: JSON.stringify(data), // Return the fetched data
         };
     } catch (error) {
-        console.error("Error in proxy function:", error);
+        console.error("Error in proxy function:", error); // Log the error details
 
         return {
             statusCode: 500,
             headers: {
-                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Origin': '*', // Allow all origins
                 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type',
             },
-            body: JSON.stringify({ error: error.message }),
+            body: JSON.stringify({ error: error.message }), // Return error message
         };
     }
 };
